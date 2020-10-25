@@ -87,12 +87,13 @@ tempData = {
  *
  */
 if (typeof (GVALUES) === 'undefined') {
-    GVALUES = {}
+    var GVALUES = {}
 } else {
     GVALUES = GVALUES
 }
 
 function setValues(values) {
+    //同时写入值到cookie和全局变量
 
     for (var i in values) {
         if (!(platform === 'client')) {
@@ -102,36 +103,52 @@ function setValues(values) {
         } 
         GVALUES[i] = values[i]
     }
+    //手机端背面GVLUES为空，直接同步自cookie，然后getValues不区分客户端，直接从全局变量获取
+    if (platform === 'mobile') {
+        var cookieString = document.cookie
+        var cookieObject = {}
+        //先转换cookie到object方便取值
+        for (var i of cookieString.split('; ')) {
+            cookieObject[i.split('=@@@@@@@@@@')[0]] = i.split('=@@@@@@@@@@')[1]
+        }
+        GVALUES = cookieObject
+    }
 }
 
 /** 
  * getValues
  *   接受参数key数组[]，来获取cookie和全局变量当中相应的值
- *   默认从cookies当中获取，仅当使用client客户端时从全局变量获取
- *   返回一个以传入key为key的对象，即请求什么返回什么不多余
+ *   由于cookie除非手动清除否则会一直存在，所以优先从GVALUES当中获取
+ *   在web和client客户端无问题，对于手机端则特殊处理，从cookie获取值之后，确保cookie会被清空
+ *   以免完全退出后在进入，仍然可以获取到cookie当中的内容
  *
  */
+
 function getValues(values) {
 
     var tempObject = {}
-    var cookieObject = {}
-    //平台不是client从cookie当中获取
-    if (!(platform === 'client')) {
-        var cookieString = document.cookie
-        //先转换cookie到object方便取值
-        for (var i of cookieString.split('; ')) {
-            cookieObject[i.split('=@@@@@@@@@@')[0]] = i.split('=@@@@@@@@@@')[1]
-        }
-    }else {
-        cookieObject = GVALUES
-    }
-    //在获取值
+    var resultObject = {}
+    //var cookieObject = {}
+
+    //if (!(platform === 'mobile')) {
+        //tempObject = GVALUES
+    //} else {
+        //var cookieString = document.cookie
+        ////先转换cookie到object方便取值
+        //for (var i of cookieString.split('; ')) {
+            //cookieObject[i.split('=@@@@@@@@@@')[0]] = i.split('=@@@@@@@@@@')[1]
+        //}
+        //tempObject = cookieObject
+    //}
+    
+    tempObject = GVALUES
+    //在获取值，存在返回，不存在返回undefinede
     for (var j of values) {
-        if (Object.keys(cookieObject).indexOf(j) > -1){
-            tempObject[j] = cookieObject[j]
+        if (Object.keys(tempObject).indexOf(j) > -1) {
+            resultObject[j] = tempObject[j]
         }
     }
-    return tempObject
+    return resultObject
 }
 
 
@@ -338,6 +355,8 @@ var options_reg = /<br.*?>/i
 options = options.split(options_reg)
 
 //在options加入当前的全局变量当中之前，判断是否是back界面
+//针对手机端特殊情况，传入空对象，setValues会在手机端将cookie存到全局变量当中
+setValues({})
 pageMode = ''
 if (getValues(['currentString'])['currentString'] === options.join('')) {
     pageMode = 'back'
