@@ -1,0 +1,42 @@
+.card {
+ font-family: Arial;
+ font-size: 17px;
+ text-align: left;
+ color: white;
+ background-color: #272822;
+}
+img{
+	background-color: #fff;
+}
+div{
+ margin:5px auto
+}
+.text{
+ color:#e6db74;
+ text-align:left;
+}
+.hint{
+ color:#a6e22e;
+}
+.solutions{
+ margin-top:15px;
+ font-size:16px;
+ color: #eeeebb;
+ text-align:left;
+}
+.cloze {
+ font-weight: bold;
+ color: #a6e22e;
+}
+.options{
+ list-style:upper-latin;
+}
+.options *{
+ cursor:pointer;
+}
+.options *:hover{
+ font-weight:bold;
+}
+.options li{
+ margin-top:5px;
+}
