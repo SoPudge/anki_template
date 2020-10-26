@@ -2,13 +2,18 @@
  * @Author:SoPduge
  * @Log:
  *  2020/10/23: refactor init version
+ *  2020/10/26：v1 version release
  * @file
- *  Anki分三种页面，第一种是首次进入第一题题干，第二种是答案界面展示，第三种是切换题目
+ *  本程序功能如下：
+ *      #1 单选多选自动匹配，答案乱序
+ *      #2 back页乱序答案顺序同front页，自动批改答案
+ *      #3 自动计算当次答题正确率
+ *      #4 全平台支持以上功能
  *  Ankibb不同的客户端分为以下三种，根据页面切换的情况，对变量和功能的支持如下
- *      web端：支持cookie保持，支持全局变量保持
- *      手机端：支持cookie保持，不支持全局变量保持
- *      PC端：不支持cookie功能，支持全局变量保持
- *  本程序有如下功能
+ *      web端：支持sessionStorage保持，支持全局变量保持
+ *      手机端：支持sessionStorage保持，不支持全局变量保持
+ *      PC端：不支持sessionStorage功能，支持全局变量保持
+ *  本程序有如下方法模块
  *  @ShowOptions：显示选项，在frontPage/backPage
  *  @getOptions：获取用户选项，作为选项的onChange触发，frontPage存在
  *  @setOptions：将用户选项同步到backPage，仅在backPage存在
@@ -26,9 +31,6 @@
  *   mobile:手机端
  *   web:网页端
  *
- *   如果不支持cookie，则说明是client
- *   如果支持cookie，则说明是web或者mobile
- *   如果isMobile为真，则确认为手机
  */
 var platform = ''
 var ua = navigator.userAgent
@@ -48,79 +50,68 @@ if (isMobile) {
 
 /**
  * 检测界面
- *   1:首次进入
- *   2:显示backPage
- *   3:进入新题目
- *
- *   首次进入：
- *      web：cookie=[],GVALUE=[]
- *      client: cookie=null,GVALUE=[]
- *      mob: cookie=[],GVALUE=[]
- *
- *  后续进入正面：
- *      web: cookie=ok,GVALUE=ok
- *      client: cookie=null,GVALUE=ok
- *      mob: cookie=ok,GVALUE=[]
- *
- *  每次翻页：
- *      web: cookie=ok,GVALUE=ok
- *      client: cookie=null,GVALUE=ok
- *      mob: cookie=ok,GVALUE=[]
- *
- *  注意手机端每次翻页GVALUE都为空，需同步自cookie，PC端不支持cookie，纯使用GVALUE
+ *  如果含有背面翻页线，即id='answer'的元素，则为背面
  */
 
+var pageMode = ''
+if (!document.getElementById('answer')) {
+    pageMode = 'front'
+} else {
+    pageMode = 'back'
+}
 
-/** 
- * @setValues
- *   接受参数key-value，来设置cookie和全局变量GVALUES
- *   如果不是client平台，直接写入cookies，然后if之外写入全局变量GVALUES
- *   传几个参数，更新几个参数，可以部分更新，可以全部更新
- *   标准对象的模版如下
-tempData = {
+/**
+ * 创建变量
+ *  如果全局变量或者sessionStorage为空，则创建相关内容
+    {
         currentString:'',//代表未乱序的当前题目options列表直接合成的字符串[].join('')
         shuffleString:'',//乱序后的innerHTML字符串
         correctNumber:tempCorrectNumber.toString(),//正确题目数量
         totalNumber:(tempTotalNumber+=1).toString(),//总题目数量
         userSelectionString:''//用户选择答案如012，字符串
         }
- *
  */
+
 if (typeof (GVALUES) === 'undefined') {
     var GVALUES = {}
-} else {
-    GVALUES = GVALUES
+    GVALUES['currentString'] = ''
+    GVALUES['shuffleString'] = ''
+    GVALUES['correctNumber'] = '0'
+    GVALUES['totalNumber'] = '0'
+    GVALUES['userSelectionString'] = ''
+} 
+
+if (!isClient && sessionStorage.length === 0){
+    sessionStorage.setItem('currentString','')
+    sessionStorage.setItem('shuffleString','')
+    sessionStorage.setItem('correctNumber','0')
+    sessionStorage.setItem('totalNumber','0')
+    sessionStorage.setItem('userSelectionString','')
 }
 
+/** 
+ * @setValues
+ *  对于web，mobile，使用sessionStorage方法存储，离开页面自动清空
+ *  对于client，使用全局变量GVALUES，离开页面自动清空
+ *
+ */
+
 function setValues(values) {
-    //同时写入值到cookie和全局变量
 
     for (var i in values) {
-        if (!(platform === 'client')) {
-            var tempValues = ''
-            tempValues = i + '=@@@@@@@@@@' + values[i]
-            document.cookie = tempValues
-        } 
-        GVALUES[i] = values[i]
-    }
-    //手机端背面GVLUES为空，直接同步自cookie，然后getValues不区分客户端，直接从全局变量获取
-    if (platform === 'mobile') {
-        var cookieString = document.cookie
-        var cookieObject = {}
-        //先转换cookie到object方便取值
-        for (var i of cookieString.split('; ')) {
-            cookieObject[i.split('=@@@@@@@@@@')[0]] = i.split('=@@@@@@@@@@')[1]
+        if (platform === 'client') {
+            GVALUES[i] = values[i]
+        } else {
+            sessionStorage.setItem(i, values[i])
         }
-        GVALUES = cookieObject
     }
 }
 
 /** 
  * getValues
- *   接受参数key数组[]，来获取cookie和全局变量当中相应的值
- *   由于cookie除非手动清除否则会一直存在，所以优先从GVALUES当中获取
- *   在web和client客户端无问题，对于手机端则特殊处理，从cookie获取值之后，确保cookie会被清空
- *   以免完全退出后在进入，仍然可以获取到cookie当中的内容
+ *  接受一个数组作为参数，数组内部元素为请求数据的key
+ *  如果为client客户端，则从全局变量取值，否则从sessionStorage当中取值，都返回object
+ *  请求哪个key就返回哪个key
  *
  */
 
@@ -128,20 +119,19 @@ function getValues(values) {
 
     var tempObject = {}
     var resultObject = {}
-    //var cookieObject = {}
 
-    //if (!(platform === 'mobile')) {
-        //tempObject = GVALUES
-    //} else {
-        //var cookieString = document.cookie
-        ////先转换cookie到object方便取值
-        //for (var i of cookieString.split('; ')) {
-            //cookieObject[i.split('=@@@@@@@@@@')[0]] = i.split('=@@@@@@@@@@')[1]
-        //}
-        //tempObject = cookieObject
-    //}
-    
-    tempObject = GVALUES
+    //转存不同客户端下的全局变量到tempObject
+    if (platform === 'client') {
+        tempObject = GVALUES
+    } else {
+        var n = 0
+        for (var i in sessionStorage) {
+            if (n < sessionStorage.length) {
+                tempObject[i] = sessionStorage.getItem(i)
+                n++
+            }
+        }
+    }
     //在获取值，存在返回，不存在返回undefinede
     for (var j of values) {
         if (Object.keys(tempObject).indexOf(j) > -1) {
@@ -152,14 +142,12 @@ function getValues(values) {
 }
 
 
-/** *showOptions
- *    接受参数 
- *
- *
- *
+/** showOptions
+ *      显示答案，对于正面直接显示乱序答案并存储，对于反面则从变量当中获取乱序答案直接显示
+ *      生成的innerHTML按照标准答案标记正误，使用onChange方法在每次选择时都更新选项到全局变量
  *
  */
-function showOptions(isShuffle, isLastShuffle) {
+function showOptions() {
 
     function shuffleAnswer(arr) {
         for (let i = arr.length; i > 0; i--) {
@@ -195,27 +183,17 @@ function showOptions(isShuffle, isLastShuffle) {
         }
         //selectType：单选或多选
         //answersType：标记答案正误
-        //i：原始顺序，从0开始
+        //i：原始答案顺序，从0开始
         optionTemplate = `<li><label><input type="${selectType}" name="radio_option" id="${answersType}" value="${i}" onchange="getOptions(this)">${options[i]}</label></li>`
         optionsHtml.push(optionTemplate)
     }
-    //写入前乱序列号，按传入参数isShuffle来决定，yes为乱序，no为正序
-    if (isShuffle === 'yes') {
+    //如果是正面，则乱序显示并将shuffleString存储到全局变量，如果是背面则获取全局变量shuffleString显示出来
+    if (pageMode === 'front') {
         optionsHtml = shuffleAnswer(optionsHtml)
-    } else if (isShuffle === 'no') {
-        optionsHtml = optionsHtml
-    }
-    //每次执行前都删除所有选项子节点
-    optionsOl.innerHTML = ''
-    //检查数据是否来自于全局变量tempData.shuffleString，代表同一题切换背面后直接从全局变量获取之前乱序选项的结果
-    //isLastShuffle为yes，则证明题目不变只是翻面，使用全局变量当中存储的innerHTML，否则是变题使用optionsHtml
-    if (isLastShuffle === 'yes') {
+        setValues({'shuffleString': optionsHtml.join('')})
+        optionsOl.innerHTML = optionsHtml.join('')
+    } else {
         optionsOl.innerHTML = getValues(['shuffleString'])['shuffleString']
-    } else if (isLastShuffle === 'no') {
-        x = optionsHtml.join('')
-        optionsOl.innerHTML = x
-        //写入乱序的shuffleString即乱序答案innerHTML值
-        setValues({shuffleString:x})
     }
 }
 
@@ -223,6 +201,8 @@ function showOptions(isShuffle, isLastShuffle) {
 /**
  * @getOptions
  *  作为onChange的方法，将用户选项实时的存储到变量当中
+ *  每次用户选择，都会循环当前所有options，将选项作为数组类似[0,2,3,1]的字符串储存
+ *  循环的原因是支持单选多选
  *
  */
 
@@ -238,7 +218,7 @@ function getOptions(userOption) {
             userSelectionList.push(i.value)
         }
     }
-    setValues({userSelectionString:userSelectionList.join('')})
+    setValues({'userSelectionString':userSelectionList.join('')})
 }
 
 
@@ -266,12 +246,10 @@ function setOptions() {
         }
         //反面同步填充用户答案勾选
         if (userAnswerNumberArray.includes(i.value)) {
-            //勾选用户答案
             i.checked = true
         }
     }
-    //如果用户答案正确，分为有correctNumber和没有
-    //var isCorrectNumber = Object.keys(GVALUES).indexOf('correctNumber')
+    //如果用户答案正确，取出correctNumber并+1写入
     if (userAnswerNumberArray.sort().join('') === answers.join('')) {
         var tempCorrectNumber = getValues(['correctNumber'])['correctNumber'] * 1
         setValues({'correctNumber': tempCorrectNumber + 1})
@@ -289,24 +267,14 @@ function setOptions() {
 function setRatio() {
 
     var ratio = document.getElementById('ratio')
-    //从全局变量获取全部答题的数量
+    //从全局变量获取全部答题的数量，front页面+1
     var totalNumber = getValues(['totalNumber'])['totalNumber']
-    var correctNumber = getValues(['correctNumber'])['correctNumber']
-
-    if (typeof(totalNumber) === 'undefined') {
-        setValues({'totalNumber': '1'})
-    }else if (pageMode === 'front'){
+    if (pageMode === 'front'){
         totalNumber = totalNumber * 1 + 1
         setValues({'totalNumber':totalNumber})
     }
 
-    //判断是否存在correctNumber，如果不存在则创建并初始化0，后续在setOptions当中会+1
-    if (!correctNumber) {
-        setValues({'correctNumber': '0'})
-    }
-
-    //重新获取更新的totalNumber
-    var totalNumber = getValues(['totalNumber'])['totalNumber']
+    //从全局变量获取correctNumber，因为correctNumber在setOptions当中已经变更
     var correctNumber = getValues(['correctNumber'])['correctNumber']
 
     //判断翻页，如果本题正面，错误项不显示；如果翻页，显示错误项
@@ -340,8 +308,6 @@ function setCountdown(){
 countdown()
 }
 
-
-
 /**
  * 变量说明
  * @options: 所有选项的数组[1,2,3]，内容为字符串
@@ -353,32 +319,20 @@ countdown()
 var options = document.getElementById("options").innerHTML
 var options_reg = /<br.*?>/i
 options = options.split(options_reg)
-
-//在options加入当前的全局变量当中之前，判断是否是back界面
-//针对手机端特殊情况，传入空对象，setValues会在手机端将cookie存到全局变量当中
-setValues({})
-pageMode = ''
-if (getValues(['currentString'])['currentString'] === options.join('')) {
+//特殊处理，对于手机端无法判断front/back，则通过全局变量存储的选项，和当前页面选项对比，两者一致说明在背面
+if (isMobile && getValues(['currentString'])['currentString'] === options.join('')){
     pageMode = 'back'
-} else {
-    pageMode = 'front'
 }
-
-//更新currentString的值
-setValues({currentString:options.join('')})
+setValues({'currentString':options.join('')})
 var answers = document.getElementById("answers").innerHTML
 answers = answers.split(',').map(Number)
 var optionsOl = document.getElementById("optionList")
 
 //主程序
-
+showOptions()
 if (pageMode === 'front') {
-    showOptions('yes', 'no')
-    //正面显示正确率
-    setRatio()
     setCountdown()
 } else {
-    showOptions('no', 'yes')
     setOptions()
-    setRatio()
 }
+setRatio()
