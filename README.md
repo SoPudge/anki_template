@@ -51,13 +51,15 @@
 - **(可选)字段6: CorrectRatio**  
 此字段可选，即自定义的正确率，当然可以换成别的，删除方法同字段5
 
-### 卡片
-
 ## 功能截图
 
-## 创建卡片和字段
+### 创建卡片和字段
+![](http://github.com/SoPudge/anki_template/raw/master/example/card.png)
 
 ### 电脑版本
+![](http://github.com/SoPudge/anki_template/raw/master/example/client_front.png)
+![](http://github.com/SoPudge/anki_template/raw/master/example/client_back.png)
 
 ### Android版本
-
+<img src="http://github.com/SoPudge/anki_template/raw/master/example/android_front.jpg" width=75% height=75%>
+<img src="http://github.com/SoPudge/anki_template/raw/master/example/android_back.jpg" width=75% height=75%>
