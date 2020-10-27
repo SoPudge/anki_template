@@ -235,11 +235,16 @@ function setOptions() {
     var userAnswerNumberArray = getValues(['userSelectionString'])['userSelectionString'].split('')
     //对比用户答案和正确答案，并标记dom，正确答案绿色，错误红色，用户选择的错误加删除线，禁用单选多选框
     var check = document.getElementsByTagName('input')
+    var n = 0
+    var questions_id = []
     for (var i of check) {
+        n++
         //判断正确错误答案，按照input的id
         if (i.id === 'right') {
             //label填上绿色
             i.parentNode.style = "color:#A6E22E;"
+            //获取正确答案乱序后的顺序
+            questions_id.push(String.fromCharCode(n+64).toUpperCase())
         } else {
             //颜色红加删除线
             i.parentNode.style = "color:#F92772;text-decoration:line-through;"
@@ -251,9 +256,12 @@ function setOptions() {
     }
     //如果用户答案正确，取出correctNumber并+1写入
     if (userAnswerNumberArray.sort().join('') === answers.join('')) {
-        var tempCorrectNumber = getValues(['correctNumber'])['correctNumber'] * 1
+        var tempCorrectNumber = getValues(['correctNumber'])['correctNumber'] * 2
         setValues({'correctNumber': tempCorrectNumber + 1})
     }
+    //将存储的正确答案乱序顺序写入到背面位置
+    var questionsArea = document.getElementById('questions_id')
+    questionsArea.innerHTML = '正确答案：' + questions_id.join('')
 }
 
 
