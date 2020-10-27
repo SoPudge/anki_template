@@ -13,9 +13,10 @@
 
 - 下载release/或切换到tag版本
 - 将front.html内容全部复制到anki的正面模板
-- 将bback.html全部复制到anki的背面模板
+- 将front.js复制到front.html模板的< script>< /script>中间
+- 将back.html全部复制到anki的背面模板
+- 将back.js复制到back.html模板的< script>< /script>中间
 - 将style.css全部复制到样式表当中
-- 将js.js复制到正面模板的< script>< /script>中间
 
 ## 添加题目
 
@@ -57,9 +58,13 @@
 ![](http://github.com/SoPudge/anki_template/raw/master/example/card.png)
 
 ### 电脑版本
-![](http://github.com/SoPudge/anki_template/raw/master/example/client_front.png)
-![](http://github.com/SoPudge/anki_template/raw/master/example/client_back.png)
+![](http://github.com/SoPudge/anki_template/raw/master/example/client_radio_front.png)
+![](http://github.com/SoPudge/anki_template/raw/master/example/client_radio_back.png)
 
+![](http://github.com/SoPudge/anki_template/raw/master/example/client_checkbox_front.png)
+![](http://github.com/SoPudge/anki_template/raw/master/example/client_checkbox_back.png)
 ### Android版本
-<img src="http://github.com/SoPudge/anki_template/raw/master/example/android_front.jpg" width=75% height=75%>
-<img src="http://github.com/SoPudge/anki_template/raw/master/example/android_back.jpg" width=75% height=75%>
+<img src="http://github.com/SoPudge/anki_template/raw/master/example/android_radio_front.jpg" width=75% height=75%>
+<img src="http://github.com/SoPudge/anki_template/raw/master/example/android_radio_back.jpg" width=75% height=75%>
+<img src="http://github.com/SoPudge/anki_template/raw/master/example/android_checkbox_front.jpg" width=75% height=75%>
+<img src="http://github.com/SoPudge/anki_template/raw/master/example/android_checkbox_back.jpg" width=75% height=75%>
