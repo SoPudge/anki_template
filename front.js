@@ -184,7 +184,7 @@ function showOptions() {
         //selectType：单选或多选
         //answersType：标记答案正误
         //i：原始答案顺序，从0开始
-        optionTemplate = `<li><label><input type="${selectType}" name="radio_option" id="${answersType}" value="${i}" onchange="getOptions(this)">${options[i]}</label></li>`
+        optionTemplate = `<li><label onclick=""><input type="${selectType}" name="radio_option" id="${answersType}" value="${i}" onchange="getOptions(this)">${options[i]}</label></li>`
         optionsHtml.push(optionTemplate)
     }
     //如果是正面，则乱序显示并将shuffleString存储到全局变量，如果是背面则获取全局变量shuffleString显示出来
