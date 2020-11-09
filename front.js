@@ -251,7 +251,7 @@ function setOptions() {
     }
     //如果用户答案正确，取出correctNumber并+1写入
     if (userAnswerNumberArray.sort().join('') === answers.join('')) {
-        var tempCorrectNumber = getValues(['correctNumber'])['correctNumber'] * 2
+        var tempCorrectNumber = getValues(['correctNumber'])['correctNumber'] * 1
         setValues({'correctNumber': tempCorrectNumber + 1})
     }
 }
