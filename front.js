@@ -27,25 +27,26 @@
 
 /**
  * 检测系统平台，输出结果调用
- *   client:client电脑客户端（MAC，PC）
+ *   client:client电脑客户端（MAC，PC, IOS)，由于ios版本支持全局变量在退出答题页面后清零，所以将ios版本也定义为client
+ *   使用gvalues全局变量代替sessionStorage
  *   mobile:手机端
  *   web:网页端
- *
  */
 var platform = ''
 var ua = navigator.userAgent
-var isMobile = ua.indexOf('Android') > -1
-    || ua.indexOf('iPhone') > -1
+var isAndroid = ua.indexOf('Android') > -1
+
+var isIOS = ua.indexOf('iPhone') > -1 
     || ua.indexOf('iPad') > -1
 
 var isClient = ua.indexOf('QtWebEngine') > -1
 
-if (isMobile) {
+if (isAndroid) {
     platform = 'mobile'
-} else if (isClient) {
+} else if (isClient || isIOS) {
     platform = 'client'
 } else {
-    platform = 'web'
+    platform = 'client'
 } 
 
 /**
@@ -91,8 +92,8 @@ if (!isClient && sessionStorage.length === 0){
 
 /** 
  * @setValues
- *  对于web，mobile，使用sessionStorage方法存储，离开页面自动清空
- *  对于client，使用全局变量GVALUES，离开页面自动清空
+ * 对于Android mobile，使用sessionStorage方法存储，离开页面自动清空
+ *  对于web和client和ios，使用全局变量GVALUES，离开页面自动清空
  *
  */
 
@@ -184,7 +185,7 @@ function showOptions() {
         //selectType：单选或多选
         //answersType：标记答案正误
         //i：原始答案顺序，从0开始
-        optionTemplate = `<li><label onclick=""><input type="${selectType}" name="radio_option" id="${answersType}" value="${i}" onchange="getOptions(this)">${options[i]}</label></li>`
+        optionTemplate = `<li><label onclick=""><input type="${selectType}" name="radio_option" id="${answersType}" value="${i}" onchange="getOptions()">${options[i]}</label></li>`
         optionsHtml.push(optionTemplate)
     }
     //如果是正面，则乱序显示并将shuffleString存储到全局变量，如果是背面则获取全局变量shuffleString显示出来
@@ -206,7 +207,7 @@ function showOptions() {
  *
  */
 
-function getOptions(userOption) {
+function getOptions() {
 
     //获取单选或多选的用户选择值
     //单选多选都可用
@@ -320,7 +321,7 @@ var options = document.getElementById("options").innerHTML
 var options_reg = /<br.*?>/i
 options = options.split(options_reg)
 //特殊处理，对于手机端无法判断front/back，则通过全局变量存储的选项，和当前页面选项对比，两者一致说明在背面
-if (isMobile && getValues(['currentString'])['currentString'] === options.join('')){
+if ((isAndroid || isIOS) && getValues(['currentString'])['currentString'] === options.join('')){
     pageMode = 'back'
 }
 setValues({'currentString':options.join('')})
