@@ -1,10 +1,9 @@
 /**
  * @Author:SoPduge
- * @Log:
- *  2020/10/23: refactor init version
- *  2020/10/26：v1 version release
- * @file
- *  本程序功能如下：
+ * @Version:
+ * v1.4
+ * https://github.com/SoPudge/anki_template/releases
+ * @file 本程序功能如下：
  *      #1 单选多选自动匹配，答案乱序
  *      #2 back页乱序答案顺序同front页，自动批改答案
  *      #3 自动计算当次答题正确率
