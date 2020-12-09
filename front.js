@@ -319,11 +319,12 @@ countdown()
 var options = document.getElementById("options").innerHTML
 var options_reg = /<br.*?>/i
 options = options.split(options_reg)
+var question = document.getElementById("question").innerHTML
 //特殊处理，对于手机端无法判断front/back，则通过全局变量存储的选项，和当前页面选项对比，两者一致说明在背面
-if ((isAndroid || isIOS) && getValues(['currentString'])['currentString'] === options.join('')){
+if ((isAndroid || isIOS) && getValues(['currentString'])['currentString'] === question+options.join('')){
     pageMode = 'back'
 }
-setValues({'currentString':options.join('')})
+setValues({'currentString':question+options.join('')})
 var answers = document.getElementById("answers").innerHTML
 answers = answers.split(',').map(Number)
 var optionsOl = document.getElementById("optionList")
