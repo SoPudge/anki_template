@@ -1,13 +1,16 @@
 /**
  * @Author:SoPduge
  * @Version:
- * v1.4
+ * v1.6
  * https://github.com/SoPudge/anki_template/releases
+ * @log
+ *  2021/5/26: 新增错误最多选项功能，发布v1.6版本
  * @file 本程序功能如下：
  *      #1 单选多选自动匹配，答案乱序
  *      #2 back页乱序答案顺序同front页，自动批改答案
  *      #3 自动计算当次答题正确率
  *      #4 全平台支持以上功能
+ *      #5 支持最多错误选项字段功能
  *  Ankibb不同的客户端分为以下三种，根据页面切换的情况，对变量和功能的支持如下
  *      web端：支持sessionStorage保持，支持全局变量保持
  *      手机端：支持sessionStorage保持，不支持全局变量保持
@@ -177,6 +180,9 @@ function showOptions() {
                 answersType = "right"
                 //遇到正确的项目立即跳出循环，完成多选
                 break
+            } else if (i === mostwrong){
+                //标记错误最多答案
+                answersType = "mostwrong"
             } else {
                 answersType = "wrong"
             }
@@ -189,7 +195,8 @@ function showOptions() {
     }
     //如果是正面，则乱序显示并将shuffleString存储到全局变量，如果是背面则获取全局变量shuffleString显示出来
     if (pageMode === 'front') {
-        optionsHtml = shuffleAnswer(optionsHtml)
+        //去掉下列行注释，开启选项随机功能
+        //optionsHtml = shuffleAnswer(optionsHtml)
         setValues({'shuffleString': optionsHtml.join('')})
         optionsOl.innerHTML = optionsHtml.join('')
     } else {
@@ -328,6 +335,8 @@ setValues({'currentString':question+options.join('')})
 var answers = document.getElementById("answers").innerHTML
 answers = answers.split(',').map(Number)
 var optionsOl = document.getElementById("optionList")
+//获取错误最多答案，本身即是数字
+var mostwrong =  document.getElementById("most-wrong").innerHTML * 1
 
 //主程序
 showOptions()
